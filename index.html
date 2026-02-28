@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo de Tecnologías Digitales - UTU</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #0f172a;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        .font-display { font-family: 'Fredoka', sans-serif; }
+
+        /* Estilo de Tarjetas 3D */
+        .card-container {
+            perspective: 1000px;
+            aspect-ratio: 1/1;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-front {
+            background-color: white;
+            color: #0f172a;
+            border: 1px solid #334155;
+        }
+
+        .card-back {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            transform: rotateY(180deg);
+        }
+
+        /* Indicador de celda completada (Nueva paleta Esmeralda/Cian) */
+        .card-inner.is-completed .card-front {
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: #ffffff;
+            border: 2px solid #ccfbf1;
+        }
+
+        .card-inner.is-completed .card-front span,
+        .card-inner.is-completed .card-front p {
+            color: white;
+        }
+
+        .card-inner.is-completed .card-front #name-display {
+            color: #f0fdfa;
+        }
+
+        /* Animación de Bingo */
+        @keyframes tech-pulse {
+            0%, 100% { transform: scale(1); border: 4px solid #22d3ee; box-shadow: 0 0 15px #22d3ee; }
+            50% { transform: scale(1.05); border: 4px solid #10b981; box-shadow: 0 0 25px #10b981; }
+        }
+        .winning-cell { animation: tech-pulse 0.8s infinite; z-index: 10; }
+
+        /* Estilo del Modal de Reglas (Nuevo gradiente) */
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(6px);
+        }
+
+        .rules-gradient-btn {
+            background: linear-gradient(to right, #0d9488, #0891b2);
+            transition: all 0.3s;
+        }
+        .rules-gradient-btn:hover { 
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        input:focus { outline: none; border-bottom: 2px solid #06b6d4; }
+
+        @media (max-width: 640px) {
+            .card-front p { font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="font-display text-4xl md:text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                <span class="text-3xl">📡</span> Bingo Tech Digital <span class="text-3xl">🧬</span>
+            </h1>
+            <p class="text-cyan-200 text-lg font-medium">Uso responsable y seguro de la tecnología</p>
+            <div class="h-1 w-24 bg-cyan-500 mx-auto mt-2 rounded-full"></div>
+        </header>
+
+        <!-- Controles Superiores -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <div class="bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-sm">
+                🛰️ Marcadas: <span id="counter" class="text-white">0</span>/25
+            </div>
+            <button onclick="openRules()" class="bg-slate-700/50 hover:bg-slate-700 text-cyan-100 border border-slate-600 px-5 py-2 rounded-xl flex items-center gap-2 transition-all">
+                📋 Ver Reglas
+            </button>
+            <button onclick="resetGame()" class="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 px-5 py-2 rounded-xl flex items-center gap-2 transition-all">
+                🔄 Reiniciar
+            </button>
+        </div>
+
+        <!-- Tablero de Bingo -->
+        <div id="bingo-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+            <!-- Las tarjetas se generan dinámicamente -->
+        </div>
+
+        <p class="text-center text-slate-400 mt-8 text-sm">
+            🛡️ Fomentando la ciudadanía digital en UTU
+        </p>
+    </div>
+
+    <!-- MODAL DE REGLAS (Nueva estética compacta) -->
+    <div id="rules-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-[340px] overflow-hidden shadow-2xl transform transition-all border border-cyan-100">
+            <div class="p-5">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-2xl">📋</span>
+                    <h2 class="font-display text-2xl font-bold text-cyan-700">Protocolo de Juego</h2>
+                </div>
+
+                <div class="space-y-3 text-slate-600">
+                    <div class="flex items-start gap-3">
+                        <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">1</span>
+                        <p class="font-semibold text-sm">Buscá compañeros que cumplan con las afirmaciones técnicas.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">2</span>
+                        <p class="font-semibold text-sm">Cada casilla debe ser validada por un compañero diferente.</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">3</span>
+                        <p class="font-semibold text-sm">Gana quien complete una línea y reporte el ¡BINGO!</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">4</span>
+                        <p class="font-semibold text-sm">Honestidad: es fundamental para la reflexión final.</p>
+                    </div>
+                </div>
+
+                <button onclick="closeRules()" class="w-full mt-6 py-3 rounded-full text-white font-bold text-lg rules-gradient-btn shadow-lg">
+                    ¡Entendido!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación de Victoria -->
+    <div id="win-message" class="fixed top-10 left-1/2 -translate-x-1/2 bg-cyan-400 text-slate-900 px-8 py-4 rounded-full font-bold text-2xl shadow-[0_0_30px_rgba(34,211,238,0.5)] z-[60] hidden animate-bounce border-2 border-white">
+        🚀 ¡SISTEMA COMPLETADO: BINGO! 🚀
+    </div>
+
+    <script>
+        const bingoItems = [
+            { emoji: "📱", text: "Usa redes sociales todos los días" },
+            { emoji: "🎓", text: "Ha tomado un curso en línea" },
+            { emoji: "💻", text: "Sabe programar algo básico" },
+            { emoji: "🎬", text: "Ha editado un video o imagen" },
+            { emoji: "🤣", text: "Ha creado un meme viral" },
+            { emoji: "📲", text: "Prefiere la tecnología móvil sobre la PC" },
+            { emoji: "🔐", text: "Usa contraseñas seguras" },
+            { emoji: "🛒", text: "Ha comprado algo en línea" },
+            { emoji: "🤖", text: "Conoce qué es la inteligencia artificial" },
+            { emoji: "📅", text: "Usa apps para organizarse" },
+            { emoji: "🦠", text: "Ha tenido un problema con un virus" },
+            { emoji: "🖥️", text: "Ha instalado un sistema operativo" },
+            { emoji: "🎮", text: "Prefiere los videojuegos a las películas" },
+            { emoji: "🌐", text: "Conoce al menos tres navegadores" },
+            { emoji: "📝", text: "Ha creado una presentación digital" },
+            { emoji: "🤖", text: "Ha usado ChatGPT o asistentes de IA" },
+            { emoji: "🛡️", text: "Se preocupa por la privacidad web" },
+            { emoji: "🌙", text: "Prefiere el modo oscuro en las apps" },
+            { emoji: "🆘", text: "Ha ayudado con un problema técnico" },
+            { emoji: "📂", text: "Tiene más de 10 apps instaladas" },
+            { emoji: "🕶️", text: "Ha probado realidad virtual/aumentada" },
+            { emoji: "🚨", text: "Sabe qué es el phishing y cómo evitarlo" },
+            { emoji: "🎭", text: "Ha usado IA para realizar tareas" },
+            { emoji: "📊", text: "Ha usado hojas de cálculo con fórmulas" },
+            { emoji: "🎧", text: "Ha escuchado un pódcast de tecnología" }
+        ];
+
+        let gameState = Array(25).fill(null).map(() => ({ checked: false, name: "" }));
+
+        function initGrid() {
+            const grid = document.getElementById('bingo-grid');
+            grid.innerHTML = '';
+            
+            bingoItems.forEach((item, index) => {
+                const container = document.createElement('div');
+                container.className = 'card-container';
+                container.innerHTML = `
+                    <div class="card-inner" id="card-${index}" onclick="handleFlip(${index})">
+                        <div class="card-front">
+                            <span class="text-3xl mb-1">${item.emoji}</span>
+                            <p class="text-[11px] font-bold text-center leading-tight px-1">${item.text}</p>
+                            <span id="name-display-${index}" class="mt-2 text-[10px] font-bold uppercase overflow-hidden text-ellipsis w-full text-center text-cyan-600"></span>
+                        </div>
+                        <div class="card-back" onclick="event.stopPropagation()">
+                            <p class="text-[9px] font-bold text-cyan-700 mb-1 uppercase">Validado por:</p>
+                            <input type="text" 
+                                   id="input-${index}" 
+                                   class="w-full bg-transparent border-b border-slate-300 text-center text-xs py-1 mb-2 placeholder:text-slate-400"
+                                   placeholder="Nombre del compañero..."
+                                   onkeypress="if(event.key === 'Enter') saveName(${index})">
+                            <button onclick="saveName(${index})" class="bg-cyan-600 text-white text-[9px] px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(container);
+            });
+        }
+
+        function handleFlip(index) {
+            const card = document.getElementById(`card-${index}`);
+            card.classList.add('is-flipped');
+            setTimeout(() => {
+                const input = document.getElementById(`input-${index}`);
+                if(input) input.focus();
+            }, 300);
+        }
+
+        function saveName(index) {
+            const input = document.getElementById(`input-${index}`);
+            const name = input.value.trim();
+            const card = document.getElementById(`card-${index}`);
+            const nameDisplay = document.getElementById(`name-display-${index}`);
+
+            if (name !== "") {
+                gameState[index].name = name;
+                gameState[index].checked = true;
+                nameDisplay.innerText = name;
+                card.classList.add('is-completed');
+                card.classList.remove('is-flipped');
+                updateProgress();
+                checkBingo();
+            } else {
+                card.classList.remove('is-flipped');
+                gameState[index].checked = false;
+                gameState[index].name = "";
+                nameDisplay.innerText = "";
+                card.classList.remove('is-completed');
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const count = gameState.filter(s => s.checked).length;
+            document.getElementById('counter').innerText = count;
+        }
+
+        function checkBingo() {
+            const lines = [
+                [0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16, 17, 18, 19], [20, 21, 22, 23, 24],
+                [0, 5, 10, 15, 20], [1, 6, 11, 16, 21], [2, 7, 12, 17, 22], [3, 8, 13, 18, 23], [4, 9, 14, 19, 24],
+                [0, 6, 12, 18, 24], [4, 8, 12, 16, 20]
+            ];
+
+            for (let line of lines) {
+                if (line.every(idx => gameState[idx].checked)) {
+                    celebrate(line);
+                    return;
+                }
+            }
+        }
+
+        function celebrate(winningLine) {
+            document.getElementById('win-message').classList.remove('hidden');
+            winningLine.forEach(idx => {
+                document.getElementById(`card-${idx}`).classList.add('winning-cell');
+            });
+            for(let i=0; i<40; i++) createConfeti();
+        }
+
+        function createConfeti() {
+            const confeti = document.createElement('div');
+            confeti.innerText = ['⚡', '✨', '💎', '💻', '🛰️'][Math.floor(Math.random()*5)];
+            confeti.style.position = 'fixed';
+            confeti.style.left = Math.random() * 100 + 'vw';
+            confeti.style.top = '-5vh';
+            confeti.style.fontSize = '24px';
+            confeti.style.zIndex = 100;
+            confeti.style.transition = `transform 3s linear, top 3s linear`;
+            document.body.appendChild(confeti);
+            setTimeout(() => {
+                confeti.style.top = '105vh';
+                confeti.style.transform = `rotate(360deg)`;
+            }, 10);
+            setTimeout(() => confeti.remove(), 4000);
+        }
+
+        function resetGame() {
+            if(confirm("¿Estás seguro que deseás reiniciar el tablero? Se perderán todas las firmas digitales.")) {
+                gameState = Array(25).fill(null).map(() => ({ checked: false, name: "" }));
+                document.getElementById('win-message').classList.add('hidden');
+                initGrid();
+                updateProgress();
+            }
+        }
+
+        function openRules() { document.getElementById('rules-modal').classList.remove('hidden'); }
+        function closeRules() { document.getElementById('rules-modal').classList.add('hidden'); }
+
+        window.onload = initGrid;
+    </script>
+</body>
+</html>
