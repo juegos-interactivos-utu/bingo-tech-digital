@@ -42,13 +42,20 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 1.25rem;
+            border-radius: 0.75rem; /* Bordes un poco más pequeños para mobile */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0.5rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            padding: 0.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (min-width: 768px) {
+            .card-front, .card-back {
+                border-radius: 1.25rem;
+                padding: 0.5rem;
+            }
         }
 
         .card-front {
@@ -63,7 +70,7 @@
             transform: rotateY(180deg);
         }
 
-        /* Indicador de celda completada (Nueva paleta Esmeralda/Cian) */
+        /* Indicador de celda completada */
         .card-inner.is-completed .card-front {
             background: linear-gradient(135deg, #10b981, #06b6d4);
             color: #ffffff;
@@ -75,18 +82,14 @@
             color: white;
         }
 
-        .card-inner.is-completed .card-front #name-display {
-            color: #f0fdfa;
-        }
-
         /* Animación de Bingo */
         @keyframes tech-pulse {
-            0%, 100% { transform: scale(1); border: 4px solid #22d3ee; box-shadow: 0 0 15px #22d3ee; }
-            50% { transform: scale(1.05); border: 4px solid #10b981; box-shadow: 0 0 25px #10b981; }
+            0%, 100% { transform: scale(1); border: 3px solid #22d3ee; box-shadow: 0 0 10px #22d3ee; }
+            50% { transform: scale(1.05); border: 3px solid #10b981; box-shadow: 0 0 20px #10b981; }
         }
         .winning-cell { animation: tech-pulse 0.8s infinite; z-index: 10; }
 
-        /* Estilo del Modal de Reglas (Nuevo gradiente) */
+        /* Estilo del Modal de Reglas */
         .modal-overlay {
             background-color: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(6px);
@@ -96,78 +99,71 @@
             background: linear-gradient(to right, #0d9488, #0891b2);
             transition: all 0.3s;
         }
-        .rules-gradient-btn:hover { 
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
 
         input:focus { outline: none; border-bottom: 2px solid #06b6d4; }
 
-        @media (max-width: 640px) {
-            .card-front p { font-size: 0.65rem; }
+        /* Escalamiento de fuentes para mobile extremo */
+        .text-tiny { font-size: 0.6rem; line-height: 0.7rem; }
+        @media (min-width: 640px) {
+            .text-tiny { font-size: 0.75rem; line-height: 1rem; }
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-2 md:p-8">
 
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="font-display text-4xl md:text-5xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-                <span class="text-3xl">📡</span> Bingo Tech Digital <span class="text-3xl">🧬</span>
+        <header class="text-center mb-4 md:mb-8">
+            <h1 class="font-display text-2xl md:text-5xl font-bold text-white mb-1 flex items-center justify-center gap-2">
+                <span class="text-xl md:text-3xl">📡</span> Bingo Tech Digital <span class="text-xl md:text-3xl">🧬</span>
             </h1>
-            <p class="text-cyan-200 text-lg font-medium">Uso responsable y seguro de la tecnología</p>
-            <div class="h-1 w-24 bg-cyan-500 mx-auto mt-2 rounded-full"></div>
+            <p class="text-cyan-200 text-sm md:text-lg font-medium">Uso responsable y seguro de la tecnología</p>
         </header>
 
         <!-- Controles Superiores -->
-        <div class="flex flex-wrap justify-center gap-4 mb-8">
-            <div class="bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-sm">
-                🛰️ Marcadas: <span id="counter" class="text-white">0</span>/25
+        <div class="flex justify-center gap-2 md:gap-4 mb-4 md:mb-8">
+            <div class="bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 px-3 py-1.5 rounded-lg flex items-center gap-1 font-bold text-xs md:text-base">
+                ✅ <span id="counter" class="text-white">0</span>/25
             </div>
-            <button onclick="openRules()" class="bg-slate-700/50 hover:bg-slate-700 text-cyan-100 border border-slate-600 px-5 py-2 rounded-xl flex items-center gap-2 transition-all">
-                📋 Ver Reglas
+            <button onclick="openRules()" class="bg-slate-700/50 hover:bg-slate-700 text-cyan-100 border border-slate-600 px-3 py-1.5 rounded-lg text-xs md:text-base transition-all">
+                📋 Reglas
             </button>
-            <button onclick="resetGame()" class="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 px-5 py-2 rounded-xl flex items-center gap-2 transition-all">
+            <button onclick="resetGame()" class="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-1.5 rounded-lg text-xs md:text-base transition-all">
                 🔄 Reiniciar
             </button>
         </div>
 
-        <!-- Tablero de Bingo -->
-        <div id="bingo-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+        <!-- Tablero de Bingo (Forzado 5 columnas en mobile) -->
+        <div id="bingo-grid" class="grid grid-cols-5 gap-1 md:gap-4">
             <!-- Las tarjetas se generan dinámicamente -->
         </div>
 
-        <p class="text-center text-slate-400 mt-8 text-sm">
-            🛡️ Fomentando la ciudadanía digital en UTU
+        <p class="text-center text-slate-500 mt-6 text-[10px] md:text-sm italic">
+            🛡️ Ciudadanía Digital • UTU Uruguay
         </p>
     </div>
 
-    <!-- MODAL DE REGLAS (Nueva estética compacta) -->
+    <!-- MODAL DE REGLAS -->
     <div id="rules-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl w-full max-w-[340px] overflow-hidden shadow-2xl transform transition-all border border-cyan-100">
             <div class="p-5">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="text-2xl">📋</span>
-                    <h2 class="font-display text-2xl font-bold text-cyan-700">Protocolo de Juego</h2>
+                    <h2 class="font-display text-2xl font-bold text-cyan-700">Protocolo</h2>
                 </div>
 
                 <div class="space-y-3 text-slate-600">
                     <div class="flex items-start gap-3">
                         <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">1</span>
-                        <p class="font-semibold text-sm">Buscá compañeros que cumplan con las afirmaciones técnicas.</p>
+                        <p class="font-semibold text-xs md:text-sm">Buscá compañeros que cumplan con las afirmaciones.</p>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">2</span>
-                        <p class="font-semibold text-sm">Cada casilla debe ser validada por un compañero diferente.</p>
+                        <p class="font-semibold text-xs md:text-sm">Cada casilla debe ser firmada por alguien diferente.</p>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">3</span>
-                        <p class="font-semibold text-sm">Gana quien complete una línea y reporte el ¡BINGO!</p>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="bg-cyan-600 text-white w-6 h-6 flex items-center justify-center rounded-md font-bold shrink-0 text-xs shadow-sm">4</span>
-                        <p class="font-semibold text-sm">Honestidad: es fundamental para la reflexión final.</p>
+                        <p class="font-semibold text-xs md:text-sm">Completá una línea (5 casillas) y gritá ¡BINGO!</p>
                     </div>
                 </div>
 
@@ -179,7 +175,7 @@
     </div>
 
     <!-- Notificación de Victoria -->
-    <div id="win-message" class="fixed top-10 left-1/2 -translate-x-1/2 bg-cyan-400 text-slate-900 px-8 py-4 rounded-full font-bold text-2xl shadow-[0_0_30px_rgba(34,211,238,0.5)] z-[60] hidden animate-bounce border-2 border-white">
+    <div id="win-message" class="fixed top-5 left-1/2 -translate-x-1/2 bg-cyan-400 text-slate-900 px-6 py-3 rounded-full font-bold text-lg md:text-2xl shadow-xl z-[60] hidden animate-bounce border-2 border-white">
         🚀 ¡SISTEMA COMPLETADO: BINGO! 🚀
     </div>
 
@@ -190,26 +186,26 @@
             { emoji: "💻", text: "Sabe programar algo básico" },
             { emoji: "🎬", text: "Ha editado un video o imagen" },
             { emoji: "🤣", text: "Ha creado un meme viral" },
-            { emoji: "📲", text: "Prefiere la tecnología móvil sobre la PC" },
+            { emoji: "📲", text: "Prefiere móvil sobre la PC" },
             { emoji: "🔐", text: "Usa contraseñas seguras" },
             { emoji: "🛒", text: "Ha comprado algo en línea" },
-            { emoji: "🤖", text: "Conoce qué es la inteligencia artificial" },
+            { emoji: "🤖", text: "Sabe qué es la IA" },
             { emoji: "📅", text: "Usa apps para organizarse" },
-            { emoji: "🦠", text: "Ha tenido un problema con un virus" },
-            { emoji: "🖥️", text: "Ha instalado un sistema operativo" },
-            { emoji: "🎮", text: "Prefiere los videojuegos a las películas" },
-            { emoji: "🌐", text: "Conoce al menos tres navegadores" },
-            { emoji: "📝", text: "Ha creado una presentación digital" },
-            { emoji: "🤖", text: "Ha usado ChatGPT o asistentes de IA" },
-            { emoji: "🛡️", text: "Se preocupa por la privacidad web" },
-            { emoji: "🌙", text: "Prefiere el modo oscuro en las apps" },
-            { emoji: "🆘", text: "Ha ayudado con un problema técnico" },
-            { emoji: "📂", text: "Tiene más de 10 apps instaladas" },
-            { emoji: "🕶️", text: "Ha probado realidad virtual/aumentada" },
-            { emoji: "🚨", text: "Sabe qué es el phishing y cómo evitarlo" },
-            { emoji: "🎭", text: "Ha usado IA para realizar tareas" },
-            { emoji: "📊", text: "Ha usado hojas de cálculo con fórmulas" },
-            { emoji: "🎧", text: "Ha escuchado un pódcast de tecnología" }
+            { emoji: "🦠", text: "Tuvo problemas con un virus" },
+            { emoji: "🖥️", text: "Instaló un sistema operativo" },
+            { emoji: "🎮", text: "Prefiere juegos a películas" },
+            { emoji: "🌐", text: "Conoce 3 navegadores" },
+            { emoji: "📝", text: "Hizo presentaciones digitales" },
+            { emoji: "🤖", text: "Usó ChatGPT o asistentes" },
+            { emoji: "🛡️", text: "Cuida su privacidad web" },
+            { emoji: "🌙", text: "Usa modo oscuro" },
+            { emoji: "🆘", text: "Ayudó con problemas técnicos" },
+            { emoji: "📂", text: "Bajó más de 10 apps" },
+            { emoji: "🕶️", text: "Probó VR o AR" },
+            { emoji: "🚨", text: "Sabe evitar el phishing" },
+            { emoji: "🎭", text: "Usó IA para tareas" },
+            { emoji: "📊", text: "Usó Excel con fórmulas" },
+            { emoji: "🎧", text: "Escuchó pódcast tech" }
         ];
 
         let gameState = Array(25).fill(null).map(() => ({ checked: false, name: "" }));
@@ -224,19 +220,19 @@
                 container.innerHTML = `
                     <div class="card-inner" id="card-${index}" onclick="handleFlip(${index})">
                         <div class="card-front">
-                            <span class="text-3xl mb-1">${item.emoji}</span>
-                            <p class="text-[11px] font-bold text-center leading-tight px-1">${item.text}</p>
-                            <span id="name-display-${index}" class="mt-2 text-[10px] font-bold uppercase overflow-hidden text-ellipsis w-full text-center text-cyan-600"></span>
+                            <span class="text-lg md:text-3xl mb-0.5">${item.emoji}</span>
+                            <p class="text-tiny font-bold text-center leading-tight px-0.5">${item.text}</p>
+                            <span id="name-display-${index}" class="mt-1 text-[7px] md:text-[10px] font-bold uppercase overflow-hidden text-ellipsis w-full text-center text-cyan-600"></span>
                         </div>
                         <div class="card-back" onclick="event.stopPropagation()">
-                            <p class="text-[9px] font-bold text-cyan-700 mb-1 uppercase">Validado por:</p>
+                            <p class="text-[7px] md:text-[9px] font-bold text-cyan-700 mb-0.5 md:mb-1 uppercase">Validado por:</p>
                             <input type="text" 
                                    id="input-${index}" 
-                                   class="w-full bg-transparent border-b border-slate-300 text-center text-xs py-1 mb-2 placeholder:text-slate-400"
-                                   placeholder="Nombre del compañero..."
+                                   class="w-full bg-transparent border-b border-slate-300 text-center text-[9px] md:text-xs py-0.5 md:py-1 mb-1 md:mb-2 placeholder:text-slate-400"
+                                   placeholder="Nombre..."
                                    onkeypress="if(event.key === 'Enter') saveName(${index})">
-                            <button onclick="saveName(${index})" class="bg-cyan-600 text-white text-[9px] px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">
-                                Confirmar
+                            <button onclick="saveName(${index})" class="bg-cyan-600 text-white text-[7px] md:text-[9px] px-2 py-1 md:px-3 md:py-1.5 rounded-md font-bold uppercase tracking-wider">
+                                Ok
                             </button>
                         </div>
                     </div>
@@ -301,18 +297,19 @@
         function celebrate(winningLine) {
             document.getElementById('win-message').classList.remove('hidden');
             winningLine.forEach(idx => {
-                document.getElementById(`card-${idx}`).classList.add('winning-cell');
+                const card = document.getElementById(`card-${idx}`);
+                if(card) card.classList.add('winning-cell');
             });
-            for(let i=0; i<40; i++) createConfeti();
+            for(let i=0; i<30; i++) createConfeti();
         }
 
         function createConfeti() {
             const confeti = document.createElement('div');
-            confeti.innerText = ['⚡', '✨', '💎', '💻', '🛰️'][Math.floor(Math.random()*5)];
+            confeti.innerText = ['⚡', '✨', '💻', '🛰️'][Math.floor(Math.random()*4)];
             confeti.style.position = 'fixed';
             confeti.style.left = Math.random() * 100 + 'vw';
             confeti.style.top = '-5vh';
-            confeti.style.fontSize = '24px';
+            confeti.style.fontSize = '20px';
             confeti.style.zIndex = 100;
             confeti.style.transition = `transform 3s linear, top 3s linear`;
             document.body.appendChild(confeti);
@@ -324,7 +321,7 @@
         }
 
         function resetGame() {
-            if(confirm("¿Estás seguro que deseás reiniciar el tablero? Se perderán todas las firmas digitales.")) {
+            if(confirm("¿Estás seguro? Se borrarán todos los datos.")) {
                 gameState = Array(25).fill(null).map(() => ({ checked: false, name: "" }));
                 document.getElementById('win-message').classList.add('hidden');
                 initGrid();
